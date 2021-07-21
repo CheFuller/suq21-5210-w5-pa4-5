@@ -1,0 +1,50 @@
+---
+output: 
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    number_sections: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Known feature/bug of RNotebooks - Notebooks are executed in the same directory as the file but we want to set the working directory to the root directory.
+
+```{r setup}
+# Correct RNotebook working directory bug 
+knitr::opts_knit$set(root.dir = normalizePath("C:/Users/cfull/OneDrive/Desktop/suq21-5210-w2-pa2"))
+```
+
+<div style="float: right; width: 90%;">
+
+```{r}
+# Course: 5210 Communicating Data
+# Purpose: Participation Assignment #4
+# Date: July 22, 2021
+# Author: Chequala Fuller
+
+```
+
+
+# Load Libraries
+
+```{r}
+# Load libraries
+
+# For wrangling, subseting, and ploting
+library(tidyverse)
+
+# For correlation test of multiple variables
+library(Hmisc)       
+
+# Tidy cross tabs
+library(janitor)       
+
+# To calculate multinomial confidence intervals for factor variables
+library(MultinomialCI)  
+
+# To format html tables
+library(htmlTable)     

@@ -1,0 +1,732 @@
+---
+output: 
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    number_sections: true
+---
+
+Known feature/bug of RNotebooks - Notebooks are executed in the same directory as the file but we want to set the working directory to the root directory.
+
+```{r setup}
+# Correct RNotebook working directory bug 
+knitr::opts_knit$set(root.dir = normalizePath("C:/Users/cfull/OneDrive/Desktop/suq21-5210-w3-quick-project-1"))
+```
+
+<div style="float: right; width: 90%;">
+
+```{r}
+# Course: 5210 Communicating Data
+# Purpose: Participation Assignment #3
+# Date: July 17, 2021
+```
+
+# Load Packages
+
+```{r, echo = TRUE, warning = FALSE, error = FALSE}
+# Load packages
+
+# The tidyverse package contains ggplot2, dplyr, and several other packages we will use
+library(tidyverse)
+
+# The gridExtra package contains grid.arrange function used to combine plots in the same window
+library(gridExtra)
+
+# The janitor package contains tidyverse functions for cross-tables
+library(janitor)
+
+# The knitr package contains some table formating functions
+library(knitr)
+
+# The GGally package contains a custom correlation plot we will use
+library(GGally)
+
+# The scales package contains scale_y_continues for plot label formatting
+library(scales)
+
+# ggannotate
+library(ggannotate)
+```
+
+# Load Data
+
+```{r}
+king_sales <- read_csv("data/qp1_data.csv")
+```
+
+# Base EDA Step 1 - Uni-variate Non-graphical Data
+
+```{r}
+# View the data
+head(king_sales, 10)
+```
+**Comments**
+
+* Data appears tidy:
+  + Each column is a variable and the data is the same type
+  + There are 13 variables
+  + There are no duplicative variables
+  + Each row is an observation for the sale of a specific home
+
+
+## Data Structure
+
+```{r}
+# convert bedrooms, waterfront and view variables from numerical to factor
+names <- c('waterfront', 'view', 'condition')
+king_sales[,names] <- lapply(king_sales[,names], factor)
+
+# Check the structure of the data
+str(king_sales)
+```
+**Comments**
+
+* All variables were initially numerical
+  + waterfront, view, grade, and condition were converted to factor
+* Each variable is unordered
+
+## Descriptive statistics
+
+```{r}
+# Summary statistics of data
+summary(king_sales)
+```
+**Comments**
+
+* Data appears balanced across number of bedrooms
+
+* Price, sqft_living, and sqft_lot variables appear to be right skewed (asymmetrical)
+
+  + mean != median and mean >> median
+  + in these cases, we'll use the median
+  + yr_renovated is 84.4 for mean, 2015 for max but 0 for min, 1st Qu., median, and 3rd Qu. (that is alerting) - what could be going on here?
+  
+* Bedrooms, bathrooms and floors variables all appear to be symmetrical
+
+  + mean = median
+  
+* For price, is 7700000 an outlier?
+
+  + significantly higher than 3rd Qu. 645000
+
+* For bedrooms, is 33 an outlier?
+
+  + significantly higher than 3rd Qu. 4
+  
+* For bathrooms, is 8 an outlier?
+
+  + higher than 3rd Qu. 2.5
+  
+* For sqft_living, is 13540 an outlier?
+
+  + significantly higher than 3rd Qu. 2550
+  
+* For sqft_lot, is 1651359 an outlier?
+
+  + significantly higher than 3rd Qu. 10688
+  
+**Questions**
+
+* yr_renovated is 84.4 for mean, 2015 for max but 0 for min, 1st Qu., median, and 3rd Qu. What could be going on here?
+
+* Is there really a specific home with 33 bedrooms and 8 bathrooms or could this be an anomaly?  
+
+
+# Base EDA Step 2: Uni-variate Graphical
+
+* In this step, we will examine each variable individually
+
+## Categorical/Factor Variables:
+
+* Take a look at all categorical variables together
+
+```{r}
+
+# Only use bar graphs
+grid.arrange(
+  
+# waterfront
+ggplot(data = king_sales, mapping = aes(x = waterfront)) +
+  geom_bar(),
+  
+# view
+ggplot(data = king_sales, mapping = aes(x = view)) +
+  geom_bar(),
+
+# condition
+ggplot(data = king_sales, mapping = aes(x = condition)) +
+  geom_bar(),
+  
+
+ncol = 1)
+```
+
+**Comments**
+
+* Most homes sold are not waterfront locations and have little to no view. On the other hand the conditions when sold were mostly 3 and 4 (mediocre) for King County.
+
+
+## Quantitative Variables
+
+### Price
+
+```{r}
+# Use grid.arrange() to display multiple graphs together
+grid.arrange(
+
+# Create a histogram of price
+ggplot(data = king_sales, mapping = aes(x = price)) +
+  geom_histogram(color = "violetred", alpha = 0.4, adjust = 2),
+
+# Add a boxplot
+ggplot(data = king_sales, mapping = aes(x = 1)) +
+  geom_boxplot(mapping = aes(y = price), color = "violetred", alpha = 0.5) + 
+  coord_flip(), # flip to make the x-axis the same
+
+# Set the number of columns
+ncol = 1)
+```
+
+
+**Comments**
+
+* Confirm the price is still slightly right skewed as suspected
+
+  + There were a number of outliers, which heavily skewed the mean.
+  
+  + Median is best to use for the analysis of this variable
+  
+* Most homes sold lie within the $300,000 to $600,000 price range
+
+
+### Bedrooms
+
+```{r}
+# Use grid.arrange() to display multiple graphs together
+grid.arrange(
+
+# Create a histogram of price
+ggplot(data = king_sales, mapping = aes(x = bedrooms)) +
+  geom_histogram(binwidth = 1, color = "maroon4", alpha = 0.4, adjust = 2),
+
+# Add a boxplot
+ggplot(data = king_sales, mapping = aes(x = 1)) +
+  geom_boxplot(mapping = aes(y = bedrooms), color = "maroon4") + 
+  coord_flip(), # flip to make the x-axis the same
+
+# Set the number of columns
+ncol = 1)
+```
+
+**Comments**
+
+* Confirm that after eliminating outliers, the bedrooms variable is more normally distributed
+
+  + Okay to use the mean
+
+* The majority of homes sold in King Country were commonly 3 and 4 bedroom homes.
+
+**Questins**
+
+* Are the number of bedrooms and sqft_living correlated?
+
+* Are the bedrooms and sqft_living relative to price?
+
+
+### Bathrooms
+
+```{r}
+# Use grid.arrange() to display multiple graphs together
+grid.arrange(
+
+# Create a histogram of price
+ggplot(data = king_sales, mapping = aes(x = bathrooms)) +
+  geom_histogram(binwidth = 1, color = "plum", alpha = 0.4, adjust = 2),
+
+# Add a boxplot
+ggplot(data = king_sales, mapping = aes(x = 1)) +
+  geom_boxplot(mapping = aes(y = bathrooms), color = "plum") + 
+  coord_flip(), # flip to make the x-axis the same
+
+# Set the number of columns
+ncol = 1)
+```
+
+**Comments**
+
+* Even after eliminating outliers, bathrooms variable is still slightly right skewed but not a severe
+
+  + Best to use the median
+
+* Majority of homes sold had 2 bathrooms.
+
+
+### Square Footage (Living)
+
+```{r}
+# Use grid.arrange() to display multiple graphs together
+grid.arrange(
+
+# Create a histogram of sqft_living
+ggplot(data = king_sales, mapping = aes(x = sqft_living)) +
+  geom_histogram(color = "darkorchid", alpha = 0.4, adjust = 2),
+  
+
+# Add a boxplot
+ggplot(data = king_sales, mapping = aes(x = 1)) +
+  geom_boxplot(mapping = aes(y = sqft_living), color = "darkorchid") + 
+  coord_flip(), # flip to make the x-axis the same
+
+# Set the number of columns
+ncol = 1)
+```
+
+**Comments**
+
+* Confirm that sqft_living is normally distributed with a slight right skew
+
+  + Okay to use the mean
+
+* Majority of homes sold are within 1500 sqft to 2500 sqft, with multiple outliers
+
+  + The outliers are skewing the mean so median is best to use for the analysis of this variable
+  
+  
+### Square Footage (Lot)
+```{r}
+# Use grid.arrange() to display multiple graphs together
+grid.arrange(
+
+# Create a histogram of sqft_lot
+ggplot(data = king_sales, mapping = aes(x = sqft_lot)) +
+  geom_histogram(color = "magenta4", alpha = 0.4, adjust = 2),
+  
+
+# Add a boxplot
+ggplot(data = king_sales, mapping = aes(x = 1)) +
+  geom_boxplot(mapping = aes(y = sqft_lot), color = "magenta4") +
+  coord_flip(), # flip to make the x-axis the same
+
+# Set the number of columns
+ncol = 1)
+```
+
+**Comments**
+
+* Confirms that sqft_lot is asymmetrical and right skew as suspected
+  
+  + Since data is skewed, we will use the median instead of mean
+
+**Question**
+
+* Does the sqft_lot have less of an effect on price than sqft_living?
+
+
+### Year Built
+```{r}
+# Use grid.arrange() to display multiple graphs together
+grid.arrange(
+
+# Create a histogram of yr_built
+ggplot(data = king_sales, mapping = aes(x = yr_built)) +
+  geom_histogram(color = "mediumpurple3", alpha = 0.4, adjust = 2),
+  
+
+# Add a boxplot
+ggplot(data = king_sales, mapping = aes(x = 1)) +
+  geom_boxplot(mapping = aes(y = yr_built), color = "mediumpurple3") +
+  coord_flip(), # flip to make the x-axis the same
+
+# Set the number of columns
+ncol = 1)
+```
+**Comments**
+
+* Confirm yr_built is assymetrical and left skewed
+
+  + Did not eliminate year values. Especially after 2000, which create the outlier effect on the mean
+  
+  + Use the median
+  
+**Questions**
+
+* Would eliminating years > 2000 improve or worsen the model?
+
+
+# Base EDA Step 3: Multi-variate Non-graphical
+
+## Categorical
+
+```{r}
+# Contingnecy/Cross tabulation for multiple variables
+
+king_sales %>% 
+  tabyl(bedrooms, grade) %>% 
+  adorn_totals(where = c("row", "col")) %>% 
+  kable()
+```
+```{r}
+# Proportion contingency/cross tabulation for bedrooms and waterfront
+
+king_sales %>% 
+  tabyl(bedrooms, grade) %>% 
+  adorn_totals(where = c("row", "col")) %>% 
+  adorn_percentages(denominator = "all") %>% # create proportions
+  adorn_rounding(2) %>%  # round decimal two places
+  kable()
+```
+
+```{r}
+# Proportional contingency/cross tabulation for bedrooms and sqft_living
+king_sales %>% 
+  tabyl(bedrooms, waterfront) %>% 
+  adorn_totals(where = c("row", "col")) %>% 
+  adorn_percentages(denominator = "all") %>% # create proportions
+  adorn_rounding(4) %>%  # round decimal two places
+  kable()
+```
+
+**Comments**
+
+* Confirms the number of bedrooms on waterfront or view are not consistent across
+
+  + Most sales fall under those that are not located on waterfront
+  + We'll need to model these
+  + We shouldn't analyze houses with 0, 7, 8, 9, 10, 11, and 33 bedrooms. Those have low counts
+
+**Questions**
+
+* Need to verify price as it relates to number of bathrooms and sqft_living
+
+
+## Quantitative
+
+```{r}
+# Correlation table
+
+king_sales %>% 
+  select(is.numeric) %>% 
+  cor() %>% 
+  round(2) %>% 
+  kable(align = 'c', caption = "Numeric Variables Correlation Table")
+```
+
+**Comments**
+
+* As suspected, there is no significance in the sqft_lot and yr_renovated variables
+
+  + We will eliminate the variables with little to no correlation at all from the analysis
+  + Eliminate sqft_lot and yr_renovated
+  
+* There are large positive correlations between sqft_living/bathrooms (0.69), sqft_living/grade (0.67), sqft_living/bedrooms (0.61), bathrooms/grade (0.60), and price/grade (0.59) 
+
+**Questions**
+
+* Does positive correlation indicate causation?
+
+* Does price increase with sqft_living and grade?
+
+
+# Base EDA Step 4: Multi-variate Graphical
+
+## Step 4.1: Categorical
+
+* Distribution or summary of quantitative and categorical variable, bar graphs, and multiple boxplots
+
+```{r}
+# Use grid.arrange() so we can see all uni-variate bar graphs together
+
+grid.arrange(
+  
+  king_sales %>% 
+    ggplot(mapping = aes(x = sqft_living, fill = waterfront)) +
+    geom_bar(position = "dodge") +
+    coord_flip(),
+  
+  king_sales %>% 
+    ggplot(mapping = aes(x = sqft_living, fill = view)) + 
+    geom_bar(position = "dodge") +
+    coord_flip(),
+  
+  king_sales %>% 
+    ggplot(mapping = aes(x = sqft_living, fill = condition)) + 
+    geom_bar(position = "dodge") +
+    coord_flip(),
+  
+  ncol = 2
+)
+```
+
+**Comments**
+
+* Homes with no waterfront location nor view are more prominent
+
+**Questions**
+
+* Have more homes sold without waterfront or views in King County because of price?
+
+
+
+## Step 4.1: Categorical
+
+```{r}
+# More detail on bedrooms and view
+
+grid.arrange(
+  # Cluster of counts
+  king_sales %>% 
+    ggplot(mapping = aes(x = bedrooms, fill = view)) + 
+    geom_bar(position = "dodge") +
+    coord_flip(),
+  
+  # Proportion of counts
+  king_sales %>% 
+    ggplot(mapping = aes(x = bedrooms, fill = view)) +
+    geom_bar(position = "fill") +
+    coord_flip(),
+  
+ncol = 1)
+```
+
+
+## Step 4.2: Quantitative
+
+```{r}
+# Scatterplots using grid.arrange() to see all quantitave variables of interest together
+
+king_sales %>% 
+  ggplot(mapping = aes(x = sqft_living, y = price)) +
+  geom_point()
+```
+
+**Comments**
+
+* This is pattern is quite clustered from 290 sqft to 5000 sqft. Then it disperses.
+
+
+## Step 4.3: Categorical and Quantitative
+
+```{r}
+# Use ggpairs from the GGally package
+king_sales %>% 
+  select(-c(sqft_lot, yr_renovated)) %>% 
+  ggpairs(columns = c(1:4, 6:8))
+```
+
+**Questions**
+
+* Look closer at the following variable relationships:
+
+  + sqft_living and bathrooms
+  + sqft_living and grade
+  + sqft_living and bedrooms
+  + bathrooms and grade
+  + price and grade
+
+```{r}
+# follow up on correlation graphs
+
+grid.arrange(
+  
+  # sqft_living and bathrooms
+  king_sales %>% 
+    ggplot(mapping = aes(x = sqft_living, y = bathrooms)) +
+    geom_point() +
+    geom_smooth(method = "lm", se = FALSE),
+  
+  # sqft_living and bedrooms
+  king_sales %>% 
+    ggplot(mapping = aes(x = sqft_living, y = bedrooms)) +
+    geom_point() +
+    geom_smooth(method = "lm", se = FALSE),
+  
+  ncol = 1)
+```
+
+```{r}
+
+grid.arrange(
+  
+  # sqft_living and grade
+  king_sales %>% 
+    ggplot(mapping = aes(x = sqft_living, y = grade)) +
+    geom_point() +
+    geom_smooth(method = "lm", se = FALSE),
+  
+  # bathrooms and grade
+  king_sales %>% 
+    ggplot(mapping = aes(x = bathrooms, y = grade)) +
+    geom_point() +
+    geom_smooth(method = "lm", se = FALSE),
+  
+  
+  ncol = 1)
+```
+
+```{r}
+grid.arrange(
+  
+  # price and grade
+  king_sales %>% 
+    ggplot(mapping = aes(x = bathrooms, y = grade)) +
+    geom_point() +
+    geom_smooth(method = "lm", se = FALSE),
+  
+
+ncol = 1)
+```
+
+**Comments**
+
+* There is a similar pattern between price and sqft_living across both grade and number of bathrooms 
+
+  + It appears the price of sale increases as sqft_living and grade quality increase
+  
+  + Similarly, price also increases as sqft_living and bathrooms increase
+
+
+# Detailed EDA - Questions Raised in Base EDA
+
+## Verify price as it relates to the number of bathrooms. Does it differ?
+
+
+```{r}
+# facet histogram - price and grade
+king_sales %>% 
+  ggplot(mapping = aes(x = price)) +
+  geom_histogram() +
+  facet_wrap( ~ grade)
+```
+
+**Comments**
+
+* The pattern holds
+  
+
+## Does the price differ across various grade?
+
+```{r}
+
+# facet histograms - sqft_living and bedrooms
+king_sales %>% 
+  ggplot(mapping = aes(x = sqft_living)) +
+  geom_histogram() +
+  facet_wrap( ~ bedrooms)
+```
+
+**Comments**
+
+* The pattern holds. Let's explore this relationship further.
+
+
+## Does price differ across sqft_living and grade? 
+
+```{r}
+# facet histograms - price
+king_sales %>% 
+  ggplot(mapping = aes(x = sqft_living, y = price)) +
+  geom_jitter(width = 0.5) +
+  facet_wrap( ~ grade)
+
+king_sales %>% 
+  ggplot(mapping = aes(x = sqft_living, y = price)) +
+  geom_jitter(width = 0.5) +
+  geom_smooth(method = "lm", se = FALSE)
+```
+
+# Summary
+
+* Most houses sold in King County do not come with waterfront locations or good views at that.
+
+* The King County housing market appears to be influenced by features including the number of square footage of living space, the grade quality of a home, as well as the number of bathrooms included.
+
+* Pricing appears to be consistent across sqft_living and grade.
+
+
+# Create Professional Visuals
+
+```{r}
+# Plot price and year
+price_yr_built <- king_sales %>% 
+  ggplot(mapping = aes(x = yr_built, y = price, color = yr_built)) +
+  geom_col(postion = "fill") +
+  labs(x = "Year Built",
+       y = "Price of Homes Built",
+       title = "The Number of Homes Built from 1900 - 2000",
+       subtitle = "Common number of bedrooms per home depending on the era") +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"))
+
+
+# View price_yr_built plot
+price_yr_built
+```
+
+```{r}
+# Bar graph for number of bedrooms and price of homes sold
+price_grade_plot <- king_sales %>% 
+  ggplot(mapping = aes(x = grade, y = price, fill = waterfront)) + 
+  geom_col(position = "dodge")  + 
+  labs(x = "Grade Quality",
+       y = "Sales Price", 
+       title = "King County Housing Prices based on Quality of Home",
+       subtitle = "Is a waterfront view a determining factor?") + 
+  scale_y_continuous(labels = dollar) + # add dollar sign and decimal to y-axis values
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"))
+
+# View plot
+price_grade_plot
+```
+
+# PA4
+
+
+```{r}
+# recreate the price and grade plot from qp1 data
+rec_price_grade_plot <- king_sales %>% 
+  ggplot(mapping = aes(x = grade, y = price)) + 
+  geom_line(stat = "identity")  + 
+  geom_point(color = "blue3") +
+  scale_x_continuous(breaks = seq(0, 13, 2), lim = c(0, 13)) +
+  labs(x = "grade",
+       y = "price", 
+       title = "Increasing Price with Higher Grade")
+
+# View plot
+rec_price_grade_plot
+```
+
+```{r}
+# redesign it
+
+red_price_grade_plot <- king_sales %>% 
+  ggplot(mapping = aes(x = grade, y = price)) + 
+  geom_line(stat = "identity")  + 
+  geom_point(color = "") +
+  scale_x_continuous(breaks = seq(0, 13, 2), lim = c(0, 13)) +
+  scale_y_continuous(labels = dollar) + # add dollar sign and decimal to y-axis values
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black")) +
+  labs(x = "Grade",
+       y = "Sales Price", 
+       title = "Higher Grade Yields Increasing Sales Prices")
+
+# View plot
+red_price_grade_plot
+```
+
+
+# Save Visuals
+
+```{r}
+# Save previous graphs to use as professional visuals in the memo
+ggsave(filename = "suq21-5210-w4-pa3-price_yr_built.png", plot = price_yr_built)
+ggsave(filename = "suq21-5210-w4-pa3-price_grade_plot.png", plot = price_grade_plot)
+```
+
+
+  
+
+
