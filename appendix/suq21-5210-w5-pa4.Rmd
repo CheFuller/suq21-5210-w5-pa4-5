@@ -11,7 +11,7 @@ Known feature/bug of RNotebooks - Notebooks are executed in the same directory a
 
 ```{r setup}
 # Correct RNotebook working directory bug 
-knitr::opts_knit$set(root.dir = normalizePath("C:/Users/cfull/OneDrive/Desktop/suq21-5210-w3-quick-project-1"))
+knitr::opts_knit$set(root.dir = normalizePath("C:/Users/cfull/OneDrive/Desktop/suq21-5210-w5-pa4-5"))
 ```
 
 <div style="float: right; width: 90%;">
@@ -704,26 +704,32 @@ rec_price_grade_plot
 red_price_grade_plot <- king_sales %>% 
   ggplot(mapping = aes(x = grade, y = price)) + 
   geom_line(stat = "identity")  + 
-  geom_point(color = "") +
+  geom_point(color = "darkcyan") +
   scale_x_continuous(breaks = seq(0, 13, 2), lim = c(0, 13)) +
   scale_y_continuous(labels = dollar) + # add dollar sign and decimal to y-axis values
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), axis.line = element_line(colour = "black")) +
   labs(x = "Grade",
        y = "Sales Price", 
-       title = "Higher Grade Yields Increasing Sales Prices")
+       title = "Grade Matters in King County Sales",
+       subtitle = "Homes with Higher Quality Grade Yield Increasing Sales Prices")
 
 # View plot
 red_price_grade_plot
 ```
 
-
 # Save Visuals
 
 ```{r}
 # Save previous graphs to use as professional visuals in the memo
-ggsave(filename = "suq21-5210-w4-pa3-price_yr_built.png", plot = price_yr_built)
-ggsave(filename = "suq21-5210-w4-pa3-price_grade_plot.png", plot = price_grade_plot)
+ggsave(filename = "suq21-5210-w5-pa4-price_yr_built.png", 
+       plot = price_yr_built)
+ggsave(filename = "suq21-5210-w5-pa4-price_grade_plot.png", 
+       plot = price_grade_plot)
+ggsave(filename = "suq21-5210-w5-pa4-rec_price_grade_plot.png", 
+       plot = rec_price_grade_plot)
+ggsave(filename = "suq21-5210-w5-pa4-red_price_grade_plot.png", 
+       plot = red_price_grade_plot)
 ```
 
 
